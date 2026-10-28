@@ -210,6 +210,23 @@ local funcs = {
                                           texRotation, mirror_h, mirror_v, user_x, user_y)
       self.LRx, self.LRy = TransformPoint(self.LRx, self.LRy, scalex, scaley,
                                           texRotation, mirror_h, mirror_v, user_x, user_y)
+  end,
+  -- ForeverAuras: cuts the given share off each side of the image ({left, right,
+  -- top, bottom}). Runs after Transform on the final coordinates, so it always
+  -- cuts the picture's own edges; mirroring swaps the sides so "left" stays the
+  -- left side on screen.
+  --- @type fun(self: TextureCoords, edges: number[]?, mirror_h: boolean?, mirror_v: boolean?)
+  CropEdges = function(self, edges, mirror_h, mirror_v)
+    if not edges then return end
+    local left, right, top, bottom = edges[1] or 0, edges[2] or 0, edges[3] or 0, edges[4] or 0
+    if left == 0 and right == 0 and top == 0 and bottom == 0 then return end
+    if mirror_h then left, right = right, left end
+    if mirror_v then top, bottom = bottom, top end
+    local w, h = 1 - left - right, 1 - top - bottom
+    self.ULx, self.ULy = left + self.ULx * w, top + self.ULy * h
+    self.LLx, self.LLy = left + self.LLx * w, top + self.LLy * h
+    self.URx, self.URy = left + self.URx * w, top + self.URy * h
+    self.LRx, self.LRy = left + self.LRx * w, top + self.LRy * h
   end
 }
 

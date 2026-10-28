@@ -54,6 +54,17 @@ local default = {
   user_y = 0,
   crop_x = 0.41,
   crop_y = 0.41,
+  cropLeft = 0,
+  cropRight = 0,
+  cropTop = 0,
+  cropBottom = 0,
+  backgroundCropSeparate = false,
+  backgroundCrop_x = 0.41,
+  backgroundCrop_y = 0.41,
+  backgroundCropLeft = 0,
+  backgroundCropRight = 0,
+  backgroundCropTop = 0,
+  backgroundCropBottom = 0,
   rotation = 0, -- Uses tex coord rotation, called "legacy rotation" in the ui and texRotation in code everywhere else
   auraRotation = 0, -- Uses texture:SetRotation
   selfPoint = "CENTER",
@@ -277,6 +288,15 @@ local function hideExtraTextures(extraTextures, from)
   end
 end
 
+-- ForeverAuras: {left, right, top, bottom} edge crop from data[prefix .. "Left"] etc.
+-- Returns nil when nothing is cut, so the textures skip the extra step.
+function Private.ProgressTextureCropEdges(data, prefix)
+  local left, right = data[prefix .. "Left"] or 0, data[prefix .. "Right"] or 0
+  local top, bottom = data[prefix .. "Top"] or 0, data[prefix .. "Bottom"] or 0
+  if left == 0 and right == 0 and top == 0 and bottom == 0 then return nil end
+  return {left, right, top, bottom}
+end
+
 local function ensureExtraTextures(region, count)
   local auraRotationRadians = region.auraRotation / 180 * math.pi
   for i = #region.extraTextures + 1, count do
@@ -290,6 +310,7 @@ local function ensureExtraTextures(region, count)
       textureWrapMode = region.textureWrapMode,
       crop_x = region.crop_x,
       crop_y = region.crop_y,
+      cropEdges = region.cropEdges,
       user_x = region.user_x,
       user_y = region.user_y,
       mirror = region.mirror,
@@ -310,6 +331,7 @@ local function ensureExtraSpinners(region, count)
     Private.CircularProgressTextureBase.modify(extraSpinner, {
       crop_x = region.crop_x,
       crop_y = region.crop_y,
+      cropEdges = region.cropEdges,
       mirror = region.mirror,
       texRotation = region.effectiveTexRotation,
       texture = region.currentTexture,
@@ -638,7 +660,7 @@ local funcs = {
   SetCropY = function(self, y)
     self.crop_y = 1 + y
     self:ForAllSpinners(self.foregroundSpinner.SetCropY, self.crop_y)
-    self:ForAllLinears(self.foreground.SetCropX, self.crop_x)
+    self:ForAllLinears(self.foreground.SetCropY, self.crop_y)
   end,
   UpdateEffectiveRotation = function(self)
     self.effectiveTexRotation = self.texAnimationRotation or self.texRotation
@@ -894,6 +916,16 @@ local function modify(parent, region, data)
   region.mirror = data.mirror
   region.crop_x = 1 + data.crop_x
   region.crop_y = 1 + data.crop_y
+  region.cropEdges = Private.ProgressTextureCropEdges(data, "crop")
+  -- ForeverAuras: the background follows the fill's crop unless it has its own.
+  if data.backgroundCropSeparate then
+    region.backgroundCrop_x = 1 + (data.backgroundCrop_x or 0.41)
+    region.backgroundCrop_y = 1 + (data.backgroundCrop_y or 0.41)
+    region.backgroundCropEdges = Private.ProgressTextureCropEdges(data, "backgroundCrop")
+  else
+    region.backgroundCrop_x, region.backgroundCrop_y = region.crop_x, region.crop_y
+    region.backgroundCropEdges = region.cropEdges
+  end
   region.texRotation = data.rotation or 0
   region.user_x = -1 * (data.user_x or 0);
   region.user_y = data.user_y or 0;
@@ -938,8 +970,9 @@ local function modify(parent, region, data)
     desaturated = data.desaturateBackground,
     blendMode = data.blendMode,
     auraRotation = auraRotationRadians,
-    crop_x = region.crop_x,
-    crop_y = region.crop_y,
+    crop_x = region.backgroundCrop_x,
+    crop_y = region.backgroundCrop_y,
+    cropEdges = region.backgroundCropEdges,
     user_x = region.user_x,
     user_y = region.user_y,
     mirror = region.mirror,
@@ -960,6 +993,7 @@ local function modify(parent, region, data)
     auraRotation = auraRotationRadians,
     crop_x = region.crop_x,
     crop_y = region.crop_y,
+    cropEdges = region.cropEdges,
     user_x = region.user_x,
     user_y = region.user_y,
     mirror = region.mirror,
@@ -978,6 +1012,7 @@ local function modify(parent, region, data)
     auraRotation = auraRotationRadians,
     crop_x = region.crop_x,
     crop_y = region.crop_y,
+    cropEdges = region.cropEdges,
     user_x = region.user_x,
     user_y = region.user_y,
     mirror = region.mirror,
@@ -992,6 +1027,7 @@ local function modify(parent, region, data)
   Private.CircularProgressTextureBase.modify(region.foregroundSpinner, {
     crop_x = region.crop_x,
     crop_y = region.crop_y,
+    cropEdges = region.cropEdges,
     mirror = data.mirror,
     texRotation = region.texRotation,
     texture = data.foregroundTexture,
@@ -1004,8 +1040,9 @@ local function modify(parent, region, data)
   })
 
   Private.CircularProgressTextureBase.modify(region.backgroundSpinner, {
-    crop_x = region.crop_x,
-    crop_y = region.crop_y,
+    crop_x = region.backgroundCrop_x,
+    crop_y = region.backgroundCrop_y,
+    cropEdges = region.backgroundCropEdges,
     mirror = data.mirror,
     texRotation = region.texRotation,
     texture = data.sameTexture and data.foregroundTexture or data.backgroundTexture,
@@ -1025,6 +1062,7 @@ local function modify(parent, region, data)
   local spinnerOptions = {
     crop_x = region.crop_x,
     crop_y = region.crop_y,
+    cropEdges = region.cropEdges,
     mirror = data.mirror,
     texRotation = region.texRotation,
     texture = data.foregroundTexture,

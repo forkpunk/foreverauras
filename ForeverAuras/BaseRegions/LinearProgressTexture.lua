@@ -18,6 +18,7 @@ Private.LinearProgressTextureBase = {}
 --- @class LinearProgressTextureInstance
 --- @field crop_x number
 --- @field crop_y number
+--- @field cropEdges number[]? {left, right, top, bottom} share of the image cut off
 --- @field user_x number
 --- @field user_y number
 --- @field mirror boolean
@@ -48,6 +49,7 @@ Private.LinearProgressTextureBase = {}
 --- @field offset number
 --- @field crop_x number
 --- @field crop_y number
+--- @field cropEdges number[]? {left, right, top, bottom} share of the image cut off
 --- @field user_x number
 --- @field user_y number
 --- @field mirror boolean
@@ -284,6 +286,7 @@ local funcs = {
     local user_y = self.user_y
 
     self.coord:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v, user_x, user_y)
+    self.coord:CropEdges(self.cropEdges, mirror_h, mirror_v)
     self.coord:Apply()
   end,
 
@@ -374,6 +377,7 @@ function Private.LinearProgressTextureBase.modify(linearTexture, options)
   linearTexture:SetAuraRotation(options.auraRotation)
   linearTexture.crop_x = options.crop_x
   linearTexture.crop_y = options.crop_y
+  linearTexture.cropEdges = options.cropEdges
   linearTexture.user_x = options.user_x
   linearTexture.user_y = options.user_y
   linearTexture.mirror = options.mirror

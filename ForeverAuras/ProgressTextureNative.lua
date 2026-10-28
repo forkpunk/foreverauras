@@ -69,6 +69,7 @@ function Native.Style(native, settings, inverse)
   native.coord:SetFull()
   native.coord:Transform(settings.crop_x or 1, settings.crop_y or 1, (settings.effectiveTexRotation or settings.texRotation or 0) - anchor,
     not settings.mirror ~= not settings.mirror_h, settings.mirror_v, circular and 0 or settings.user_x, circular and 0 or settings.user_y)
+  native.coord:CropEdges(settings.cropEdges, not settings.mirror ~= not settings.mirror_h, settings.mirror_v)
   native.coord:Apply()
   texture:SetVertexColor(settings.color_anim_r or settings.color_r or 1, settings.color_anim_g or settings.color_g or 1,
     settings.color_anim_b or settings.color_b or 1, settings.color_anim_a or settings.color_a or 1)
@@ -233,6 +234,7 @@ function Native.StyleAura(native, data, parent)
     auraRotation = data.auraRotation,
     crop_x = 1 + (data.crop_x or 0),
     crop_y = 1 + (data.crop_y or 0),
+    cropEdges = Private.ProgressTextureCropEdges(data, "crop"),
     texRotation = data.rotation,
     mirror = data.mirror,
     user_x = -(data.user_x or 0),
@@ -259,9 +261,11 @@ function Native.StyleAura(native, data, parent)
   -- Shown first: a hidden base texture skips its coordinate update, so the
   -- crop, mirror and rotation set below were never applied to the background.
   background:Show()
+  local separate = data.backgroundCropSeparate
   backgroundBase.modify(background, {
-    crop_x = settings.crop_x,
-    crop_y = settings.crop_y,
+    crop_x = separate and 1 + (data.backgroundCrop_x or 0.41) or settings.crop_x,
+    crop_y = separate and 1 + (data.backgroundCrop_y or 0.41) or settings.crop_y,
+    cropEdges = separate and Private.ProgressTextureCropEdges(data, "backgroundCrop") or settings.cropEdges,
     mirror = data.mirror,
     texRotation = data.rotation or 0,
     texture = data.sameTexture and data.foregroundTexture or data.backgroundTexture,

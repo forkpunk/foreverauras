@@ -364,7 +364,69 @@ local function createOptions(id, data)
     }
   end
 
-  for _, key in ipairs({"mirror","compress","user_x","user_y","startAngle","endAngle","crop_x","crop_y","rotation","auraRotation","smoothProgress","textureWrapMode","slanted","slant","slantFirst","slantMode","desaturateForeground","blendMode"}) do
+  -- ForeverAuras: edge crop for the fill, and an optional crop of its own for the
+  -- background. Cutting the fill's edges shrinks the aura so the picture keeps
+  -- its proportions; the background just follows the aura's size.
+  local function EdgeCrop(key, otherKey, sizeKey, name, order, resize, hidden)
+    return {
+      type = "range",
+      control = "WeakAurasSpinBox",
+      width = WeakAuras.normalWidth,
+      name = name,
+      order = order,
+      min = 0,
+      max = 0.95,
+      bigStep = 0.01,
+      isPercent = true,
+      hidden = hidden,
+      set = function(info, v)
+        local other = data[otherKey] or 0
+        v = math.min(v, 0.95 - other)
+        if resize then
+          data[sizeKey] = data[sizeKey] * (1 - v - other) / (1 - (data[key] or 0) - other)
+        end
+        data[key] = v
+        WeakAuras.Add(data)
+        WeakAuras.UpdateThumbnail(data)
+        OptionsPrivate.ResetMoverSizer()
+      end,
+    }
+  end
+  local function noSeparateBackgroundCrop() return not data.backgroundCropSeparate end
+
+  options.cropLeft = EdgeCrop("cropLeft", "cropRight", "width", L["Crop Left"], 47.1, true)
+  options.cropRight = EdgeCrop("cropRight", "cropLeft", "width", L["Crop Right"], 47.2, true)
+  options.cropTop = EdgeCrop("cropTop", "cropBottom", "height", L["Crop Top"], 47.3, true)
+  options.cropBottom = EdgeCrop("cropBottom", "cropTop", "height", L["Crop Bottom"], 47.4, true)
+  options.backgroundCropSeparate = {
+    type = "toggle",
+    width = WeakAuras.doubleWidth,
+    name = L["Separate Background Crop"],
+    desc = L["Crop the background on its own instead of using the fill's crop."],
+    order = 47.5,
+  }
+  options.backgroundCrop_x = {
+    type = "range",
+    control = "WeakAurasSpinBox",
+    width = WeakAuras.normalWidth,
+    name = L["Background Crop X"],
+    order = 47.6,
+    min = 0,
+    softMax = 2,
+    bigStep = 0.01,
+    isPercent = true,
+    hidden = noSeparateBackgroundCrop,
+  }
+  options.backgroundCrop_y = CopyTable(options.backgroundCrop_x)
+  options.backgroundCrop_y.name = L["Background Crop Y"]
+  options.backgroundCrop_y.order = 47.7
+  options.backgroundCrop_y.hidden = noSeparateBackgroundCrop
+  options.backgroundCropLeft = EdgeCrop("backgroundCropLeft", "backgroundCropRight", "width", L["Background Crop Left"], 47.81, false, noSeparateBackgroundCrop)
+  options.backgroundCropRight = EdgeCrop("backgroundCropRight", "backgroundCropLeft", "width", L["Background Crop Right"], 47.82, false, noSeparateBackgroundCrop)
+  options.backgroundCropTop = EdgeCrop("backgroundCropTop", "backgroundCropBottom", "height", L["Background Crop Top"], 47.83, false, noSeparateBackgroundCrop)
+  options.backgroundCropBottom = EdgeCrop("backgroundCropBottom", "backgroundCropTop", "height", L["Background Crop Bottom"], 47.84, false, noSeparateBackgroundCrop)
+
+  for _, key in ipairs({"mirror","compress","user_x","user_y","startAngle","endAngle","crop_x","crop_y","cropLeft","cropRight","cropTop","cropBottom","backgroundCropSeparate","backgroundCrop_x","backgroundCrop_y","backgroundCropLeft","backgroundCropRight","backgroundCropTop","backgroundCropBottom","rotation","auraRotation","smoothProgress","textureWrapMode","slanted","slant","slantFirst","slantMode","desaturateForeground","blendMode"}) do
     local previousHidden = options[key].hidden
     options[key].hidden = function() return OptionsPrivate.Private.CDMAuraProgress.IsConfigured(data) or (type(previousHidden) == "function" and previousHidden()) or previousHidden == true end
   end

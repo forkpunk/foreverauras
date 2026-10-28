@@ -15,6 +15,7 @@ Private.CircularProgressTextureBase = {}
 --- @class CircularProgressTextureInstance
 --- @field crop_x number
 --- @field crop_y number
+--- @field cropEdges number[]? {left, right, top, bottom} share of the image cut off
 --- @field mirror boolean
 --- @field mirror_h boolean
 --- @field mirror_v boolean
@@ -31,6 +32,7 @@ Private.CircularProgressTextureBase = {}
 --- @class CircularProgressTextureOptions
 --- @field crop_x number
 --- @field crop_y number
+--- @field cropEdges number[]? {left, right, top, bottom} share of the image cut off
 --- @field mirror boolean
 --- @field texRotation number
 --- @field texture number|string
@@ -153,6 +155,7 @@ local funcs = {
       -- SHOW everything
       self.coords[1]:SetFull()
       self.coords[1]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[1]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[1]:Show()
 
       self.coords[2]:Hide()
@@ -172,6 +175,7 @@ local funcs = {
     if (index1 + 1 >= index2) then
       self.coords[1]:SetAngle(width, height, angle1, angle2)
       self.coords[1]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[1]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[1]:Show()
       self.coords[2]:Hide()
       self.coords[3]:Hide()
@@ -179,10 +183,12 @@ local funcs = {
       local firstEndAngle = (index1 + 1) * 90 + 45
       self.coords[1]:SetAngle(width, height, angle1, firstEndAngle)
       self.coords[1]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[1]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[1]:Show()
 
       self.coords[2]:SetAngle(width, height, firstEndAngle, angle2)
       self.coords[2]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[2]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[2]:Show()
 
       self.coords[3]:Hide()
@@ -192,14 +198,17 @@ local funcs = {
 
       self.coords[1]:SetAngle(width, height, angle1, firstEndAngle)
       self.coords[1]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[1]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[1]:Show()
 
       self.coords[2]:SetAngle(width, height, firstEndAngle, secondEndAngle)
       self.coords[2]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[2]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[2]:Show()
 
       self.coords[3]:SetAngle(width, height, secondEndAngle, angle2)
       self.coords[3]:Transform(crop_x, crop_y, texRotation, mirror_h, mirror_v)
+      self.coords[3]:CropEdges(self.cropEdges, mirror_h, mirror_v)
       self.coords[3]:Show()
     end
   end,
@@ -249,6 +258,7 @@ function Private.CircularProgressTextureBase.modify(circularTexture, options)
   circularTexture:SetAuraRotation(options.auraRotation)
   circularTexture.crop_x = options.crop_x
   circularTexture.crop_y = options.crop_y
+  circularTexture.cropEdges = options.cropEdges
   circularTexture.mirror = options.mirror
   circularTexture.texRotation = options.texRotation
   circularTexture.width = options.width
